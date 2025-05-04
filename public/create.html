@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create Item</title>
+  <meta charset="UTF-8" />
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    input, button {
+      margin: 6px 0;
+      padding: 8px;
+      width: 100%;
+      font-size: 16px;
+      height: 42px;
+      box-sizing: border-box;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>➕ Create New Item</h1>
+
+  <input type="text" id="titleInput" placeholder="Enter item title" /><br>
+  <input type="text" id="descInput" placeholder="Enter item description" /><br>
+  <input type="text" id="jwtInput" placeholder="Paste your JWT token here" /><br>
+  <button onclick="submitItem()">Submit Item</button>
+
+  <div id="message"></div>
+
+  <script>
+    async function submitItem() {
+      const title = document.getElementById('titleInput').value;
+      const description = document.getElementById('descInput').value;
+      const token = document.getElementById('jwtInput').value;
+      const messageDiv = document.getElementById('message');
+
+      if (!title || !description || !token) {
+        messageDiv.innerHTML = '<p class="error">❌ Please fill out all fields and token.</p>';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/items', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ title, description })
+        });
+
+        if (res.status === 201) {
+          messageDiv.innerHTML = '<p class="success">✅ Item created successfully!</p>';
+          document.getElementById('titleInput').value = '';
+          document.getElementById('descInput').value = '';
+          document.getElementById('jwtInput').value = '';
+        } else if (res.status === 401) {
+          messageDiv.innerHTML = '<p class="error">❌ Unauthorized: Invalid JWT token</p>';
+        } else {
+          messageDiv.innerHTML = '<p class="error">❌ Failed to create item. Check token and input.</p>';
+        }
+      } catch (err) {
+        console.error("❌ Error submitting item:", err);
+        messageDiv.innerHTML = '<p class="error">❌ Unexpected error. Try again later.</p>';
+      }
+    }
+  </script>
+</body>
+</html>

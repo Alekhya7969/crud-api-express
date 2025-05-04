@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Update Item</title>
+  <meta charset="UTF-8" />
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    input, select, button {
+      margin: 6px 0;
+      padding: 8px;
+      width: 100%;
+      font-size: 16px;
+      height: 42px;
+      box-sizing: border-box;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>✏️ Update Item</h1>
+
+  <label>Select an Item to Update:</label><br>
+  <select id="itemSelect">
+    <option value="">Loading items...</option>
+  </select><br>
+
+  <input type="text" id="titleInput" placeholder="New Item Title" /><br>
+  <input type="text" id="descInput" placeholder="New Item Description" /><br>
+  <input type="text" id="jwtInput" placeholder="Paste your JWT token here" /><br>
+  <button onclick="submitUpdate()">Update Item</button>
+
+  <div id="message"></div>
+
+  <script>
+    async function loadItems() {
+      try {
+        const res = await fetch('/api/items');
+        if (!res.ok) throw new Error('Failed to fetch items');
+        const items = await res.json();
+
+        const select = document.getElementById('itemSelect');
+        select.innerHTML = '';
+
+        items.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item.id;
+          option.textContent = `${item.title} (${item.id})`;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error("❌ Failed to fetch items:", err);
+        const select = document.getElementById('itemSelect');
+        if (select) {
+          select.innerHTML = '<option value="">Error loading items</option>';
+        }
+      }
+    }
+
+    async function submitUpdate() {
+      const id = document.getElementById('itemSelect').value;
+      const title = document.getElementById('titleInput').value;
+      const description = document.getElementById('descInput').value;
+      const token = document.getElementById('jwtInput').value;
+      const messageDiv = document.getElementById('message');
+
+      if (!id || !title || !description || !token) {
+        messageDiv.innerHTML = '<p class="error">❌ Please fill out all fields and token.</p>';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/items/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ title, description })
+        });
+
+        if (res.status === 200) {
+          messageDiv.innerHTML = '<p class="success">✅ Item updated successfully!</p>';
+          loadItems();
+        } else if (res.status === 401) {
+          messageDiv.innerHTML = '<p class="error">❌ Unauthorized: Invalid JWT token</p>';
+        } else {
+          messageDiv.innerHTML = '<p class="error">❌ Failed to update item. Check ID and token.</p>';
+        }
+      } catch (err) {
+        console.error("❌ Error submitting update:", err);
+        messageDiv.innerHTML = '<p class="error">❌ Unexpected error. Try again later.</p>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadItems);
+  </script>
+</body>
+</html>

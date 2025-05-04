@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>All Items</title>
+  <meta charset="UTF-8" />
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      max-width: 800px;
+      margin: auto;
+    }
+    .item {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 12px;
+      margin: 10px 0;
+      background-color: #f9f9f9;
+    }
+    .item h3 {
+      margin: 0 0 8px 0;
+    }
+    .item p {
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>📖 All Items</h1>
+  <div id="itemsContainer">Loading...</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    async function loadItems() {
+      try {
+        const res = await fetch('/api/items');
+        const items = await res.json();
+
+        console.log("✅ Items received:", items);
+
+        const container = document.getElementById('itemsContainer');
+        if (!items.length) {
+          container.innerHTML = '<p>No items found.</p>';
+          return;
+        }
+
+        container.innerHTML = items.map(item =>
+          `<div class="item">
+            <h3>${item.title}</h3>
+            <p>${item.description}</p>
+          </div>`
+        ).join('');
+      } catch (err) {
+        console.error("❌ Error fetching:", err);
+        const container = document.getElementById('itemsContainer');
+        container.innerText = 'Failed to load items.';
+      }
+    }
+
+    loadItems();
+  });
+</script>
+</body>
+</html>

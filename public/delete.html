@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Delete Item</title>
+  <meta charset="UTF-8" />
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    select, input, button {
+      margin: 6px 0;
+      padding: 8px;
+      width: 100%;
+      font-size: 16px;
+      height: 42px;
+      box-sizing: border-box;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .success {
+      color: green;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>❌ Delete Item</h1>
+
+  <label>Select an Item to Delete:</label><br>
+  <select id="itemSelect">
+    <option value="">Loading items...</option>
+  </select><br>
+
+  <input type="text" id="jwtInput" placeholder="Paste your JWT token here" /><br>
+  <button onclick="submitDelete()">Delete Item</button>
+
+  <div id="message"></div>
+
+  <script>
+    async function loadItems() {
+      try {
+        const res = await fetch('/api/items'); // ✅ Fixed endpoint
+        if (!res.ok) throw new Error('Fetch failed');
+
+        const items = await res.json();
+        const select = document.getElementById('itemSelect');
+        select.innerHTML = '';
+
+        items.forEach(item => {
+          const option = document.createElement('option');
+          option.value = item.id;
+          option.textContent = `${item.title} (${item.id})`;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error("❌ Failed to fetch items:", err);
+        const select = document.getElementById('itemSelect');
+        if (select) {
+          select.innerHTML = '<option value="">Error loading items</option>';
+        }
+      }
+    }
+
+    async function submitDelete() {
+      const id = document.getElementById('itemSelect').value;
+      const token = document.getElementById('jwtInput').value;
+      const messageDiv = document.getElementById('message');
+
+      if (!id || !token) {
+        messageDiv.innerHTML = '<p class="error">❌ Please select an item and provide JWT token.</p>';
+        return;
+      }
+
+      const res = await fetch(`/api/items/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (res.status === 200) {
+        messageDiv.innerHTML = '<p class="success">✅ Item deleted successfully!</p>';
+        loadItems(); // Refresh list
+      } else if (res.status === 401) {
+        messageDiv.innerHTML = '<p class="error">❌ Unauthorized: Invalid JWT token</p>';
+      } else {
+        messageDiv.innerHTML = '<p class="error">❌ Failed to delete item. Check token and selection.</p>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadItems); // ✅ DOM ready
+  </script>
+</body>
+</html>
